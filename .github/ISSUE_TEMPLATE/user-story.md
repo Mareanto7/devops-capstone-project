@@ -1,5 +1,5 @@
 ---
-name: Custom issue template capstone project
+name: user-story
 about: General Issue Template
 title: ''
 labels: ''
