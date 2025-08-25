@@ -124,3 +124,46 @@ class TestAccountService(TestCase):
         self.assertEqual(response.status_code, status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
 
     # ADD YOUR TEST CASES HERE ...
+
+    def test_get_account_list(self):
+        """It should get a list of all the accounts."""
+        self._create_accounts(5)
+        resp = self.client.get(BASE_URL)
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        data = resp.get_json()
+        self.assertEqual(len(data), 5)
+
+    def test_list_accounts_empty(self):
+        """Test listing accounts when no account exist"""
+        resp = self.client.get("/accounts")
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        data = resp.get_json()
+        self.assertEqual(len(data), 0)
+
+    def test_list_accounts_data_integrity(self):
+        """Test that returned accounts have correct fields"""
+        self._create_accounts(3)
+        resp = self.client.get("/accounts")
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        data = resp.get_json()
+        for account in data:
+            self.assertIn('id', account)
+            self.assertIn('name', account)
+            self.assertIn('email', account)
+    
+    def test_account_not_found(self):
+        """Test reading an account that does not exist results in a 404 NOT FOUND Error Code"""
+        resp = self.client.get("/accounts/999999")
+        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_method_not_allowed_on_accounts(self):
+        resp = self.client.delete("/accounts")  # Assuming DELETE not allowed on /accounts
+        self.assertEqual(resp.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+   
+    def test_unsupported_media_type(self):
+        """Test that sending unsupported Content-Type returns 415"""
+        headers = {"Content-Type": "text/plain"}
+        resp = self.client.post("/accounts", data="invalid data", headers=headers)
+        self.assertEqual(resp.status_code, status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
+
+
