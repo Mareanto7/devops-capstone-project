@@ -1,9 +1,3 @@
-#
-# This pipeline needs the following tasks from Tekton Hub
-#   - git-clone
-#   - flake8
-#
----
 apiVersion: tekton.dev/v1beta1
 kind: Pipeline
 metadata:  
@@ -15,6 +9,8 @@ spec:
     - name: repo-url
     - name: branch
       default: main
+    - name: build-image
+      default: myimage:latest
   tasks:
     - name: init
       workspaces:
@@ -30,23 +26,22 @@ spec:
       taskRef:
         name: git-clone
       params:
-      - name: url
-        value: $(params.repo-url)
-      - name: revision
-        value: $(params.branch)
+        - name: url
+          value: $(params.repo-url)
+        - name: revision
+          value: $(params.branch)
       runAfter:
         - init
-
-    - name: tests
+      
+    - name: build
       workspaces:
         - name: source
           workspace: pipeline-workspace
       taskRef:
-        name: nose
+        name: buildah
+        kind: ClusterTask
       params:
-      - name: database_uri
-        value: "sqlite:///test.db"
-      - name: args
-        value: "-v --with-spec --spec-color"
+        - name: IMAGE
+          value: "$(params.build-image)"
       runAfter:
         - clone
